@@ -7,7 +7,6 @@ from services.state.session_defaults import initial_session_defaults
 from services.config.workout_config import EXERCISE_OPTIONS
 from services.ui.style_loader import load_css, inject_local_font, inject_webrtc_styles
 from services.persistence.exercise_repository import init_db
-from streamlit_webrtc import webrtc_streamer, WebRtcMode
 from services.vision.exercise_video_processor import VideoProcessorClass
 from services.tracking.metrics import sync_metrics_update
 from services.persistence.exercise_repository import get_users_exercises
@@ -15,6 +14,14 @@ from groq import Groq
 from services.coaching.llm import LLMCoach
 from services.coaching.tts import TextToSpeech
 from services.coaching.voice_pipeline import VoicePipeline, autoplay_audio
+
+try:
+    from streamlit_webrtc import webrtc_streamer, WebRtcMode
+    STREAMLIT_WEBRTC_AVAILABLE = True
+except ModuleNotFoundError:
+    webrtc_streamer = None
+    WebRtcMode = None
+    STREAMLIT_WEBRTC_AVAILABLE = False
 
   
 def main():
@@ -197,6 +204,15 @@ def main():
             unsafe_allow_html=True,
         )
     else:
+        if not STREAMLIT_WEBRTC_AVAILABLE:
+            st.warning(
+                "Live camera tracking is unavailable because streamlit-webrtc is not installed in this deployment."
+            )
+            st.info(
+                "Update the deployment dependencies and redeploy to enable workout tracking with the camera."
+            )
+            inject_webrtc_styles()
+        else:
         context = webrtc_streamer(
             key="exercise-analysis",
             mode=WebRtcMode.SENDRECV,
@@ -209,13 +225,13 @@ def main():
             async_processing=True
         )
 
-        sync_metrics_update(context)
+            sync_metrics_update(context)
 
-        if context.state.playing:
-            time.sleep(0.25)
-            st.rerun()
+            if context.state.playing:
+                time.sleep(0.25)
+                st.rerun()
 
-        inject_webrtc_styles()
+            inject_webrtc_styles()
 
     st.divider()
 

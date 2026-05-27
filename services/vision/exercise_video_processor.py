@@ -4,7 +4,13 @@ import av
 import numpy as np
 import mediapipe as mp
 import threading
-from streamlit_webrtc import VideoProcessorBase
+
+try:
+    from streamlit_webrtc import VideoProcessorBase
+except ModuleNotFoundError:
+    class VideoProcessorBase:
+        pass
+
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 from detectors.squat import SquatDetector
