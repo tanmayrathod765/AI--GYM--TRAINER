@@ -2,8 +2,9 @@ libgl1
 libglib2.0-0t64
 libsm6
 libxext6
-libgl1-mesa-glx
 libgl1-mesa-dri
 libglx-mesa0
 libgbm1
 libglvnd0
+libegl1-mesa
+mesa-vulkan-drivers
