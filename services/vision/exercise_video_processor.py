@@ -27,19 +27,12 @@ class VideoProcessorClass(VideoProcessorBase):
         self._latest_metrics = None
         self._exercise_type = "Squats"
 
-        model_path = os.path.join(os.getcwd(), "ml_models", "pose_landmarker_full.task")
-        base_option = python.BaseOptions(model_asset_path=model_path)
-
-        options = vision.PoseLandmarkerOptions(
-            base_options=base_option,
-            running_mode=vision.RunningMode.VIDEO,
-            min_pose_detection_confidence=0.7,
-            min_pose_presence_confidence=0.7,
-            min_tracking_confidence=0.7,
-            output_segmentation_masks=False
-        )
-
-        self._landmarker = vision.PoseLandmarker.create_from_options(options)
+        # Defer heavy/native MediaPipe landmarker initialization until the
+        # first frame is processed. This avoids crashing the app at startup
+        # on platforms where required native libraries (libGLESv2, etc.) are
+        # missing. See `_ensure_landmarker` below.
+        self._landmarker = None
+        self._landmarker_error = None
 
         self._detectors = {
             "Squats": SquatDetector(),
@@ -66,6 +59,26 @@ class VideoProcessorClass(VideoProcessorBase):
     def get_exercise(self):
         with self._lock:
             return self._exercise_type
+
+    def _ensure_landmarker(self):
+        """Create the mediapipe PoseLandmarker instance. May raise OSError
+        if native shared libraries are missing (e.g. libGLESv2)."""
+        model_path = os.path.join(os.getcwd(), "ml_models", "pose_landmarker_full.task")
+        base_option = python.BaseOptions(model_asset_path=model_path)
+
+        options = vision.PoseLandmarkerOptions(
+            base_options=base_option,
+            running_mode=vision.RunningMode.VIDEO,
+            min_pose_detection_confidence=0.7,
+            min_pose_presence_confidence=0.7,
+            min_tracking_confidence=0.7,
+            output_segmentation_masks=False
+        )
+
+        # This call loads native libraries and can raise OSError if system
+        # GL libraries are not available in the runtime. Let callers handle
+        # the exception so the app can continue running.
+        self._landmarker = vision.PoseLandmarker.create_from_options(options)
         
     def _draw_skeleton(self, img, landmarks):
         h, w = img.shape[:2]
@@ -195,10 +208,47 @@ class VideoProcessorClass(VideoProcessorBase):
         )
 
     def recv(self, frame):
+        # Lazy-init the landmarker on first frame to avoid importing/loading
+        # native libraries during app startup. If initialization fails,
+        # draw an explanatory overlay and return the raw frame.
+        if self._landmarker is None and self._landmarker_error is None:
+            try:
+                self._ensure_landmarker()
+            except Exception as e:
+                # Record the error and continue; we'll show a message on-frame.
+                self._landmarker_error = str(e)
+
         image = np.asarray(
             cv2.flip(frame.to_ndarray(format="bgr24"), 1),
             dtype=np.uint8
         )
+
+        if self._landmarker is None:
+            # Draw error message on the frame explaining why pose tracking
+            # is unavailable.
+            h, w = image.shape[:2]
+            cv2.putText(
+                image,
+                "Pose tracking unavailable",
+                (30, 50),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                1,
+                (0, 0, 255),
+                2,
+                cv2.LINE_AA,
+            )
+            if self._landmarker_error:
+                cv2.putText(
+                    image,
+                    "Error: " + (self._landmarker_error[:60] + "..." if len(self._landmarker_error) > 60 else self._landmarker_error),
+                    (30, 90),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.6,
+                    (0, 0, 255),
+                    1,
+                    cv2.LINE_AA,
+                )
+            return av.VideoFrame.from_ndarray(image, format="bgr24")
 
         mp_image = mp.Image(
             image_format=mp.ImageFormat.SRGB,
