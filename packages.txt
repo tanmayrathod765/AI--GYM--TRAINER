@@ -2,3 +2,6 @@ libgl1
 libglib2.0-0t64
 libsm6
 libxext6
+libgles2-mesa
+libegl1-mesa
+libgl1-mesa-dri
