@@ -34,6 +34,12 @@ def main():
 
     load_css(os.path.join(os.getcwd(), "static", "style.css"))
     inject_local_font(os.path.join(os.getcwd(), "static", "AdobeClean.otf"), "AdobeClean")
+    # Strong client-side overrides for Streamlit-rendered inputs and autofill
+    try:
+        from services.ui.style_loader import inject_strong_input_overrides
+        inject_strong_input_overrides()
+    except Exception:
+        pass
 
     init_db()
 

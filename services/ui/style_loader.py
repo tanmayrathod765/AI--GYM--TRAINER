@@ -94,3 +94,67 @@ def inject_webrtc_styles():
         """,
         height=0,
     )
+
+
+def inject_strong_input_overrides():
+    """Inject JS that force-applies dark theme styles to inputs, selects,
+    and textareas, running on DOM mutations and periodically to override
+    browser autofill and Streamlit runtime styles."""
+    components.html(
+        """
+        <script>
+        (function() {
+            const STYLE_ID = 'strong-theme-overrides';
+            if (document.getElementById(STYLE_ID)) return;
+
+            const css = `
+            input, textarea, select, .stSelectbox, .stTextInput {
+                background-color: #0A0D14 !important;
+                color: #ffffff !important;
+                border: 1px solid rgba(255,255,255,0.06) !important;
+            }
+            input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.6) !important; }
+            `;
+
+            const style = document.createElement('style');
+            style.id = STYLE_ID;
+            style.appendChild(document.createTextNode(css));
+            document.head.appendChild(style);
+
+            function applyInline(el) {
+                try {
+                    if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT')) {
+                        el.style.backgroundColor = '#0A0D14';
+                        el.style.color = '#ffffff';
+                        el.style.border = '1px solid rgba(255,255,255,0.06)';
+                    }
+                } catch(e) {}
+            }
+
+            function applyAll() {
+                document.querySelectorAll('input, textarea, select').forEach(applyInline);
+                // also target common Streamlit wrapper nodes
+                document.querySelectorAll('[data-testid="stSelectbox"] div, [data-testid="stTextInput"] input').forEach(el => el && (el.style.backgroundColor = '#0A0D14'));
+            }
+
+            // Run periodically (covers autofill and late-rendered widgets)
+            applyAll();
+            const interval = setInterval(applyAll, 600);
+
+            // Observe DOM changes
+            const mo = new MutationObserver(mutations => {
+                for (const m of mutations) {
+                    if (m.addedNodes && m.addedNodes.length) {
+                        m.addedNodes.forEach(node => {
+                            if (node.querySelectorAll) node.querySelectorAll('input,textarea,select').forEach(applyInline);
+                            applyInline(node);
+                        });
+                    }
+                }
+            });
+            mo.observe(document.body, { childList: true, subtree: true });
+        })();
+        </script>
+        """,
+        height=0,
+    )
