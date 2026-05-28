@@ -20,6 +20,33 @@
   font-family: 'AdobeClean', sans-serif !important;
 }
 
+/* Force form input backgrounds and text color to match theme,
+   including browser autofill overrides */
+input,
+textarea,
+select,
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="password"] {
+  background-color: #0A0D14 !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+/* Placeholder color */
+input::placeholder,
+textarea::placeholder {
+  color: rgba(255,255,255,0.6) !important;
+}
+
+/* Autofill (Chrome/Edge) */
+input:-webkit-autofill,
+textarea:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0px 1000px #0A0D14 inset !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
 /* =========================================================
    LAYOUT
 ========================================================= */
