@@ -47,6 +47,44 @@ textarea:-webkit-autofill {
   -webkit-text-fill-color: #ffffff !important;
 }
 
+/* Strong overrides for Streamlit wrappers and selectboxes */
+.stTextInput input,
+.stNumberInput input,
+.stTextArea textarea,
+.stSelectbox > div > div,
+.stSelectbox div[data-baseweb="select"] div,
+[data-testid="stSelectbox"] > div > div,
+[data-testid="stTextInput"] input,
+[data-testid="stNumberInput"] input,
+[data-testid="stTextArea"] textarea,
+.stSidebar [data-testid="stTextInput"] input,
+.stSidebar [data-testid="stSelectbox"] > div > div {
+  background-color: #0A0D14 !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255,255,255,0.06) !important;
+}
+
+/* BaseWeb / MUI style overrides used by Streamlit components */
+div[class*="css-"] input,
+div[class*="css-"] textarea,
+div[class*="_control"] input {
+  background-color: #0A0D14 !important;
+  color: #ffffff !important;
+}
+
+/* Select dropdowns and their inner display */
+div[data-baseweb="select"] > div {
+  background-color: #0A0D14 !important;
+  color: #ffffff !important;
+}
+
+/* Force sidebar widget backgrounds */
+[data-testid="stSidebar"] .stTextInput,
+[data-testid="stSidebar"] .stSelectbox,
+[data-testid="stSidebar"] .stNumberInput {
+  background-color: transparent !important;
+}
+
 /* =========================================================
    LAYOUT
 ========================================================= */
