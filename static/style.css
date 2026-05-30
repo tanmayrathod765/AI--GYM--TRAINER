@@ -244,3 +244,270 @@ div[role="menuitem"] {
   background-color: #181D2A !important;
   color: #fff;
 }
+
+/* =========================================================
+   MODERN DASHBOARD OVERLAY
+========================================================= */
+
+:root {
+  --coach-bg: #07111f;
+  --coach-surface: rgba(10, 20, 36, 0.84);
+  --coach-surface-strong: #11233b;
+  --coach-border: rgba(65, 211, 193, 0.18);
+  --coach-text: #f5fbff;
+  --coach-muted: rgba(217, 234, 247, 0.72);
+  --coach-accent: #41d3c1;
+  --coach-accent-warm: #ff9f43;
+  --coach-shadow: 0 28px 80px rgba(0, 0, 0, 0.45);
+}
+
+.stApp {
+  background:
+    radial-gradient(circle at top left, rgba(65, 211, 193, 0.18), transparent 30%),
+    radial-gradient(circle at top right, rgba(255, 159, 67, 0.14), transparent 28%),
+    linear-gradient(180deg, #07111f 0%, #081120 50%, #050a13 100%) !important;
+  color: var(--coach-text) !important;
+}
+
+.stApp::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 72px 72px;
+  opacity: 0.35;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.65), transparent 95%);
+}
+
+[data-testid="stSidebar"] {
+  background:
+    linear-gradient(180deg, rgba(16, 31, 53, 0.96), rgba(8, 16, 29, 0.98)),
+    radial-gradient(circle at top, rgba(65, 211, 193, 0.10), transparent 45%);
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.block-container {
+  max-width: 1180px !important;
+}
+
+.block-container,
+.block-container * {
+  font-family: 'AdobeClean', sans-serif !important;
+}
+
+.coach-hero {
+  position: relative;
+  overflow: hidden;
+  margin: 0 0 1.5rem 0;
+  padding: 2rem 2rem 1.6rem;
+  border-radius: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background:
+    linear-gradient(135deg, rgba(18, 38, 61, 0.92), rgba(7, 16, 29, 0.82)),
+    radial-gradient(circle at right top, rgba(65, 211, 193, 0.22), transparent 32%),
+    radial-gradient(circle at left bottom, rgba(255, 159, 67, 0.14), transparent 35%);
+  box-shadow: var(--coach-shadow);
+}
+
+.coach-hero::after {
+  content: "";
+  position: absolute;
+  right: -64px;
+  top: -72px;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(65, 211, 193, 0.24), transparent 66%);
+}
+
+.coach-eyebrow,
+.login-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.8rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.coach-eyebrow {
+  background: rgba(65, 211, 193, 0.12);
+  border: 1px solid rgba(65, 211, 193, 0.24);
+  color: var(--coach-accent) !important;
+}
+
+.login-badge {
+  background: rgba(255, 159, 67, 0.12);
+  border: 1px solid rgba(255, 159, 67, 0.22);
+  color: var(--coach-accent-warm) !important;
+}
+
+.coach-title {
+  margin: 0.85rem 0 0.5rem;
+  font-size: clamp(2rem, 4vw, 3.8rem);
+  line-height: 0.95;
+  font-weight: 800;
+}
+
+.coach-title span {
+  color: var(--coach-accent);
+}
+
+.coach-subtitle,
+.login-card p {
+  color: var(--coach-muted) !important;
+  line-height: 1.6;
+}
+
+.coach-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.85rem;
+  margin-top: 1.3rem;
+}
+
+.coach-stat,
+.coach-panel,
+.login-card,
+.stForm {
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: var(--coach-shadow);
+}
+
+.coach-stat {
+  padding: 0.95rem 1rem;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.coach-stat strong {
+  display: block;
+  font-size: 1.05rem;
+  color: var(--coach-text);
+}
+
+.coach-stat span {
+  display: block;
+  margin-top: 0.25rem;
+  color: var(--coach-muted);
+  font-size: 0.9rem;
+}
+
+.coach-panel,
+.login-card {
+  border-radius: 28px;
+  background: linear-gradient(180deg, rgba(17, 35, 59, 0.94), rgba(8, 16, 29, 0.94));
+  backdrop-filter: blur(18px);
+}
+
+.coach-panel {
+  padding: 1.35rem 1.45rem;
+  margin: 1rem 0 1.25rem;
+}
+
+.login-shell {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 1rem 0 1.5rem;
+}
+
+.login-card {
+  padding: 2rem;
+}
+
+input,
+textarea,
+select,
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="password"],
+.stTextInput input,
+.stNumberInput input,
+.stTextArea textarea,
+.stSelectbox > div > div,
+.stSelectbox div[data-baseweb="select"] div,
+[data-testid="stSelectbox"] > div > div,
+[data-testid="stTextInput"] input,
+[data-testid="stNumberInput"] input,
+[data-testid="stTextArea"] textarea {
+  background-color: rgba(8, 16, 29, 0.96) !important;
+  color: var(--coach-text) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 16px !important;
+  box-shadow: none !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: rgba(231, 244, 255, 0.56) !important;
+}
+
+input:-webkit-autofill,
+textarea:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0px 1000px #08101d inset !important;
+  -webkit-text-fill-color: var(--coach-text) !important;
+}
+
+button,
+.stButton button,
+.stDownloadButton button,
+.MuiBox-root button,
+[data-testid="stBaseButton-secondaryFormSubmit"] {
+  background: linear-gradient(135deg, rgba(65, 211, 193, 0.18), rgba(17, 35, 59, 0.98)) !important;
+  border: 1px solid rgba(65, 211, 193, 0.3) !important;
+  color: var(--coach-text) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
+}
+
+[data-testid="stMetric"] {
+  background: linear-gradient(180deg, rgba(17, 35, 59, 0.95), rgba(8, 16, 29, 0.92));
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 1rem 1.1rem;
+  box-shadow: var(--coach-shadow);
+}
+
+[data-testid="stMetricValue"] {
+  font-size: 1.55rem !important;
+  font-weight: 700 !important;
+  color: var(--coach-text);
+}
+
+[data-testid="stMetricLabel"] {
+  font-size: 0.92rem !important;
+  color: var(--coach-muted) !important;
+}
+
+.stForm {
+  margin-top: 1.6rem !important;
+  padding: 1.35rem 1.1rem !important;
+  background: linear-gradient(180deg, rgba(17, 35, 59, 0.96), rgba(8, 16, 29, 0.92)) !important;
+  color: var(--coach-text);
+}
+
+.stDataFrame,
+.stDataFrame div,
+.stDataFrameGlideDataEditor {
+  border-radius: 20px !important;
+  font-family: 'AdobeClean', sans-serif !important;
+}
+
+@media (max-width: 860px) {
+  .block-container {
+    padding: 1.25rem 1rem 3rem !important;
+  }
+
+  .coach-hero,
+  .login-card {
+    padding: 1.3rem;
+  }
+
+  .coach-stats {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,9 +1,14 @@
 import os
+import sys
 import cv2
 import av
 import numpy as np
 import mediapipe as mp
 import threading
+
+APP_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+if APP_ROOT not in sys.path:
+    sys.path.insert(0, APP_ROOT)
 
 try:
     from streamlit_webrtc import VideoProcessorBase
@@ -13,6 +18,7 @@ except ModuleNotFoundError:
 
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
+
 from detectors.squat import SquatDetector
 from detectors.pushup import PushUpDetector
 from detectors.biceps_curl import BicepsCurlDetector
@@ -29,8 +35,7 @@ class VideoProcessorClass(VideoProcessorBase):
 
         # Defer heavy/native MediaPipe landmarker initialization until the
         # first frame is processed. This avoids crashing the app at startup
-        # on platforms where required native libraries (libGLESv2, etc.) are
-        # missing. See `_ensure_landmarker` below.
+        # on platforms where required native libraries are missing.
         self._landmarker = None
         self._landmarker_error = None
 
@@ -61,9 +66,12 @@ class VideoProcessorClass(VideoProcessorBase):
             return self._exercise_type
 
     def _ensure_landmarker(self):
-        """Create the mediapipe PoseLandmarker instance. May raise OSError
-        if native shared libraries are missing (e.g. libGLESv2)."""
-        model_path = os.path.join(os.getcwd(), "ml_models", "pose_landmarker_full.task")
+        """Create the MediaPipe PoseLandmarker instance."""
+        model_path = os.path.join(APP_ROOT, "ml_models", "pose_landmarker_full.task")
+
+        if not os.path.exists(model_path):
+            raise FileNotFoundError(f"Missing pose model: {model_path}")
+
         base_option = python.BaseOptions(model_asset_path=model_path)
 
         options = vision.PoseLandmarkerOptions(
@@ -72,12 +80,9 @@ class VideoProcessorClass(VideoProcessorBase):
             min_pose_detection_confidence=0.7,
             min_pose_presence_confidence=0.7,
             min_tracking_confidence=0.7,
-            output_segmentation_masks=False
+            output_segmentation_masks=False,
         )
 
-        # This call loads native libraries and can raise OSError if system
-        # GL libraries are not available in the runtime. Let callers handle
-        # the exception so the app can continue running.
         self._landmarker = vision.PoseLandmarker.create_from_options(options)
         
     def _draw_skeleton(self, img, landmarks):
@@ -208,7 +213,7 @@ class VideoProcessorClass(VideoProcessorBase):
         )
 
     def recv(self, frame):
-        # Lazy-init the landmarker on first frame to avoid importing/loading
+        # Lazy-init the pose estimator on first frame to avoid importing/loading
         # native libraries during app startup. If initialization fails,
         # draw an explanatory overlay and return the raw frame.
         if self._landmarker is None and self._landmarker_error is None:
@@ -252,7 +257,7 @@ class VideoProcessorClass(VideoProcessorBase):
 
         mp_image = mp.Image(
             image_format=mp.ImageFormat.SRGB,
-            data=cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+            data=cv2.cvtColor(image, cv2.COLOR_BGR2RGB),
         )
 
         self._frame_timestamps_ms += 30

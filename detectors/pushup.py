@@ -1,94 +1,65 @@
-from core.base_exercise import BaseExercise
+from .base import BaseDetector, LEFT_ANKLE, LEFT_ELBOW, LEFT_HIP, LEFT_SHOULDER, LEFT_WRIST, RIGHT_ANKLE, RIGHT_ELBOW, RIGHT_HIP, RIGHT_SHOULDER, RIGHT_WRIST
 
 
-class PushUpDetector(BaseExercise):
-    DOWN_THRESHOLD = 90
-    UP_THRESHOLD = 160
-    MIN_VISIBILITY = 0.7
-    HIP_SAG_TOLERANCE = 0.08
-
-    LEFT_SHOULDER = 11
-    LEFT_ELBOW = 13
-    LEFT_WRIST = 15
-    RIGHT_SHOULDER = 12
-    RIGHT_ELBOW = 14
-    RIGHT_WRIST = 16
-    LEFT_HIP = 23
-    RIGHT_HIP = 24
-    LEFT_ANKLE = 27
-    RIGHT_ANKLE = 28
-
-    def __init__(self):
-        super().__init__()
-
-    def reset(self) -> None:
-        self.reps = 0
-        self.stage = None
-
-    def process(self, landmarks) -> dict:
-        left_vis = landmarks[self.LEFT_ELBOW].visibility
-        right_vis = landmarks[self.RIGHT_ELBOW].visibility
-
-        if left_vis >= right_vis:
-            shoulder_idx = self.LEFT_SHOULDER
-            elbow_idx = self.LEFT_ELBOW
-            wrist_idx = self.LEFT_WRIST
-            hip_idx = self.LEFT_HIP
-            ankle_idx = self.LEFT_ANKLE
-        else:
-            shoulder_idx = self.RIGHT_SHOULDER
-            elbow_idx = self.RIGHT_ELBOW
-            wrist_idx = self.RIGHT_WRIST
-            hip_idx = self.RIGHT_HIP
-            ankle_idx = self.RIGHT_ANKLE
-
-        elbow_angle = self.calculate_angle(
-            self.get_point(landmarks, shoulder_idx),
-            self.get_point(landmarks, elbow_idx),
-            self.get_point(landmarks, wrist_idx),
+class PushUpDetector(BaseDetector):
+    def process(self, landmarks):
+        left_elbow = self._angle(
+            landmarks[LEFT_SHOULDER],
+            landmarks[LEFT_ELBOW],
+            landmarks[LEFT_WRIST],
         )
-
-        body_angle = self.calculate_angle(
-            self.get_point(landmarks, shoulder_idx),
-            self.get_point(landmarks, hip_idx),
-            self.get_point(landmarks, ankle_idx),
+        right_elbow = self._angle(
+            landmarks[RIGHT_SHOULDER],
+            landmarks[RIGHT_ELBOW],
+            landmarks[RIGHT_WRIST],
         )
+        elbow_angle = self._avg([left_elbow, right_elbow])
 
-        shoulder_y = landmarks[shoulder_idx].y
-        ankle_y = landmarks[ankle_idx].y
-        hip_y = landmarks[hip_idx].y
+        left_body = self._angle(
+            landmarks[LEFT_SHOULDER],
+            landmarks[LEFT_HIP],
+            landmarks[LEFT_ANKLE],
+        )
+        right_body = self._angle(
+            landmarks[RIGHT_SHOULDER],
+            landmarks[RIGHT_HIP],
+            landmarks[RIGHT_ANKLE],
+        )
+        body_angle = self._avg([left_body, right_body])
 
-        expected_hip_y = (shoulder_y + ankle_y) / 2
-        hip_deviation = hip_y - expected_hip_y
+        if elbow_angle <= 95:
+            self._phase = "down"
+        elif elbow_angle >= 160 and self._phase == "down":
+            self.reps += 1
+            self._phase = "up"
 
-        key_landmarks_visible = landmarks[shoulder_idx].visibility > self.MIN_VISIBILITY and landmarks[elbow_idx].visibility > self.MIN_VISIBILITY and landmarks[wrist_idx].visibility > self.MIN_VISIBILITY and landmarks[hip_idx].visibility > self.MIN_VISIBILITY
-        
-        if key_landmarks_visible:
-            if elbow_angle < self.DOWN_THRESHOLD:
-                self.stage = "down"
-
-            if elbow_angle > self.UP_THRESHOLD and self.stage == "down":
-                self.stage = "up"
-                self.reps += 1
-
-        if body_angle > 160:
-            body_alignment = "Straight"
-        elif body_angle > 140:
-            body_alignment = "Slight Bend"
+        if body_angle >= 155:
+            body_alignment = "Good Form"
         else:
             body_alignment = "Poor Form"
 
-        if abs(hip_deviation) <= self.HIP_SAG_TOLERANCE:
-            hip_status = "LEVEL"
-        elif hip_deviation > self.HIP_SAG_TOLERANCE:
-            hip_status = "SAGGING"
-        else:
-            hip_status = "PIKED UP"
+        hip_center_y = (landmarks[LEFT_HIP].y + landmarks[RIGHT_HIP].y) / 2
+        shoulder_center_y = (landmarks[LEFT_SHOULDER].y + landmarks[RIGHT_SHOULDER].y) / 2
 
-        return {
+        if hip_center_y > shoulder_center_y + 0.08:
+            hip_status = "SAGGING"
+        elif hip_center_y < shoulder_center_y - 0.12:
+            hip_status = "PIKED UP"
+        else:
+            hip_status = "ALIGNED"
+
+        metrics = {
             "reps": self.reps,
-            "elbow_angle": int(elbow_angle),
+            "elbow_angle": round(elbow_angle, 1),
             "body_alignment": body_alignment,
             "hip_status": hip_status,
         }
-    
+
+        if body_alignment == "Poor Form":
+            metrics["issue"] = "The body is not staying straight during the push-up."
+        elif hip_status == "SAGGING":
+            metrics["issue"] = "The hips are sagging too low during the push-up."
+        elif hip_status == "PIKED UP":
+            metrics["issue"] = "The hips are too high. Keep the body in a straight line."
+
+        return metrics

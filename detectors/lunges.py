@@ -1,83 +1,55 @@
-from core.base_exercise import BaseExercise
+from .base import BaseDetector, LEFT_ANKLE, LEFT_HIP, LEFT_KNEE, LEFT_SHOULDER, RIGHT_ANKLE, RIGHT_HIP, RIGHT_KNEE, RIGHT_SHOULDER
 
 
-class LungesDetector(BaseExercise):
-    DOWN_THRESHOLD = 100
-    UP_THRESHOLD = 160
-    MIN_VISIBILITY = 0.7
-    BALANCE_TOLERANCE = 0.10
-
-    LEFT_HIP = 23
-    LEFT_KNEE = 25
-    LEFT_ANKLE = 27
-    RIGHT_HIP = 24
-    RIGHT_KNEE = 26
-    RIGHT_ANKLE = 28
-    LEFT_SHOULDER = 11
-    RIGHT_SHOULDER = 12
-
-    def __init__(self):
-        super().__init__()
-
-    def reset(self) -> None:
-        self.reps = 0
-        self.stage = None
-
-    def process(self, landmarks) -> dict:
-        left_knee_angle = self.calculate_angle(
-            self.get_point(landmarks, self.LEFT_HIP),
-            self.get_point(landmarks, self.LEFT_KNEE),
-            self.get_point(landmarks, self.LEFT_ANKLE),
+class LungesDetector(BaseDetector):
+    def process(self, landmarks):
+        left_knee = self._angle(
+            landmarks[LEFT_HIP],
+            landmarks[LEFT_KNEE],
+            landmarks[LEFT_ANKLE],
+        )
+        right_knee = self._angle(
+            landmarks[RIGHT_HIP],
+            landmarks[RIGHT_KNEE],
+            landmarks[RIGHT_ANKLE],
         )
 
-        right_knee_angle = self.calculate_angle(
-            self.get_point(landmarks, self.RIGHT_HIP),
-            self.get_point(landmarks, self.RIGHT_KNEE),
-            self.get_point(landmarks, self.RIGHT_ANKLE),
+        front_knee_angle = min(left_knee, right_knee)
+
+        left_torso = self._angle(
+            landmarks[LEFT_SHOULDER],
+            landmarks[LEFT_HIP],
+            landmarks[LEFT_KNEE],
         )
-
-        if left_knee_angle <= right_knee_angle:
-            front_knee_angle = left_knee_angle
-            front_hip_idx = self.LEFT_HIP
-            front_knee_idx = self.LEFT_KNEE
-            front_ankle_idx = self.LEFT_ANKLE
-            shoulder_idx_for_torso = self.LEFT_SHOULDER
-        else:
-            front_knee_angle = right_knee_angle
-            front_hip_idx = self.RIGHT_HIP
-            front_knee_idx = self.RIGHT_KNEE
-            front_ankle_idx = self.RIGHT_ANKLE
-            shoulder_idx_for_torso = self.RIGHT_SHOULDER
-
-        key_landmarks_visible = landmarks[front_hip_idx].visibility > self.MIN_VISIBILITY and landmarks[front_knee_idx].visibility > self.MIN_VISIBILITY and landmarks[front_ankle_idx].visibility > self.MIN_VISIBILITY
-
-        if key_landmarks_visible:
-            if front_knee_angle < self.DOWN_THRESHOLD:
-                self.stage = "down"
-
-            if front_knee_angle > self.UP_THRESHOLD and self.stage == "down":
-                self.stage = "up"
-                self.reps += 1
-
-        torso_angle = self.calculate_angle(
-            self.get_point(landmarks, shoulder_idx_for_torso),
-            self.get_point(landmarks, front_hip_idx),
-            self.get_point(landmarks, front_knee_idx),
+        right_torso = self._angle(
+            landmarks[RIGHT_SHOULDER],
+            landmarks[RIGHT_HIP],
+            landmarks[RIGHT_KNEE],
         )
+        torso_angle = self._avg([left_torso, right_torso])
 
-        shoulder_mid_x = (landmarks[self.LEFT_SHOULDER].x + landmarks[self.RIGHT_SHOULDER].x) / 2
-        hip_mid_x = (landmarks[self.LEFT_HIP].x + landmarks[self.RIGHT_HIP].x) / 2
-        lateral_offset = abs(shoulder_mid_x - hip_mid_x)
+        hip_delta = abs(landmarks[LEFT_HIP].x - landmarks[RIGHT_HIP].x)
+        shoulder_delta = abs(landmarks[LEFT_SHOULDER].x - landmarks[RIGHT_SHOULDER].x)
 
-        if lateral_offset <= self.BALANCE_TOLERANCE:
-            balance_status = "BALANCED"
-        else:
+        if front_knee_angle <= 95:
+            self._phase = "down"
+        elif front_knee_angle >= 160 and self._phase == "down":
+            self.reps += 1
+            self._phase = "up"
+
+        if hip_delta > 0.20 or shoulder_delta > 0.20:
             balance_status = "OFF BALANCE"
+        else:
+            balance_status = "STABLE"
 
-        return {
+        metrics = {
             "reps": self.reps,
-            "front_knee_angle": int(front_knee_angle),
-            "torso_angle": int(torso_angle),
+            "front_knee_angle": round(front_knee_angle, 1),
+            "torso_angle": round(torso_angle, 1),
             "balance_status": balance_status,
         }
-    
+
+        if balance_status == "OFF BALANCE":
+            metrics["issue"] = "Balance is off during the lunge. Keep the feet hip-width apart and steady."
+
+        return metrics

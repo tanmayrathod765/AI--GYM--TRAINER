@@ -2,6 +2,12 @@ import streamlit as st
 import os
 import time
 import pandas as pd
+import sys
+
+APP_ROOT = os.path.dirname(os.path.abspath(__file__))
+if APP_ROOT not in sys.path:
+    sys.path.insert(0, APP_ROOT)
+
 from services.auth.login_wall import render_login_wall
 from services.state.session_defaults import initial_session_defaults
 from services.config.workout_config import EXERCISE_OPTIONS
@@ -29,7 +35,7 @@ def main():
         page_icon="🏋️‍♀️",
         page_title="AI Real-time GYM Coach",
         initial_sidebar_state="expanded",
-        layout="centered"
+        layout="wide"
     )
 
     load_css(os.path.join(os.getcwd(), "static", "style.css"))
@@ -178,8 +184,24 @@ def main():
                 st.metric("Torso Angle", f"{st.session_state.torso_angle}°")
                 st.metric("Balance Status", st.session_state.balance_status)
 
-    st.title("AI Real-time GYM Coach")
-    st.markdown("#### Real-time pose detection with proactive AI voice coaching")
+    st.markdown(
+        """
+        <div class="coach-hero">
+            <div class="coach-eyebrow">Live training intelligence</div>
+            <div class="coach-title">AI coach that spots form <span>before</span> you feel it.</div>
+            <div class="coach-subtitle">
+                Real-time pose detection, rep counting, and voice guidance wrapped in a training dashboard
+                that feels closer to a performance console than a standard fitness app.
+            </div>
+            <div class="coach-stats">
+                <div class="coach-stat"><strong>Motion aware</strong><span>Camera-driven feedback as you move.</span></div>
+                <div class="coach-stat"><strong>Voice led</strong><span>Short, actionable cues between reps.</span></div>
+                <div class="coach-stat"><strong>Session history</strong><span>Track progress and return stronger.</span></div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
  
     if st.session_state.get("audio_to_play"):
         autoplay_audio(st.session_state.audio_to_play)
@@ -191,19 +213,11 @@ def main():
     if not workout_started:
         st.markdown(
             """
-            <div style="
-                border: 10px dashed #444;
-                border-radius: 0px;
-                padding: 48px 32px;
-                text-align: center;
-                color: #888;
-                margin-top: 32px;
-                margin-bottom: 32px;
-            ">
-                <h2 style="color:#ccc; margin-bottom:8px;">👈 Set your workout plan</h2>
-                <p style="font-size:1.05rem;">
-                    Choose your exercise, sets and reps in the sidebar,<br>
-                    then click <strong>Start Workout</strong> to activate the camera and AI coach.
+            <div class="coach-panel">
+                <h2 style="margin-top:0; margin-bottom:0.4rem;">Set your workout plan</h2>
+                <p style="margin-bottom:0; color: rgba(217, 234, 247, 0.72); font-size: 1.02rem;">
+                    Choose your exercise, sets, and reps in the sidebar, then start the session to unlock
+                    the camera, form guidance, and live coaching.
                 </p>
             </div>
             """,

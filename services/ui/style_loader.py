@@ -63,9 +63,12 @@ def inject_webrtc_styles():
                         .MuiButton-root,
                         .MuiButton-contained,
                         .MuiButton-text {{
-                            border-radius: 0 !important;
+                            border-radius: 16px !important;
+                            background: linear-gradient(135deg, rgba(65, 211, 193, 0.18), rgba(17, 35, 59, 0.98)) !important;
+                            border: 1px solid rgba(65, 211, 193, 0.3) !important;
+                            color: #f5fbff !important;
                             font-family: 'AdobeClean', sans-serif !important;
-                            letter-spacing: 0.05em !important;
+                            letter-spacing: 0.03em !important;
                         }}
                     `;
                     doc.head.appendChild(style);
@@ -109,11 +112,12 @@ def inject_strong_input_overrides():
 
             const css = `
             input, textarea, select, .stSelectbox, .stTextInput {
-                background-color: #0A0D14 !important;
-                color: #ffffff !important;
-                border: 1px solid rgba(255,255,255,0.06) !important;
+                background-color: #08101d !important;
+                color: #f5fbff !important;
+                border: 1px solid rgba(255,255,255,0.08) !important;
+                border-radius: 16px !important;
             }
-            input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.6) !important; }
+            input::placeholder, textarea::placeholder { color: rgba(231,244,255,0.56) !important; }
             `;
 
             const style = document.createElement('style');
@@ -124,9 +128,10 @@ def inject_strong_input_overrides():
             function applyInline(el) {
                 try {
                     if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT')) {
-                        el.style.backgroundColor = '#0A0D14';
-                        el.style.color = '#ffffff';
-                        el.style.border = '1px solid rgba(255,255,255,0.06)';
+                        el.style.backgroundColor = '#08101d';
+                        el.style.color = '#f5fbff';
+                        el.style.border = '1px solid rgba(255,255,255,0.08)';
+                        el.style.borderRadius = '16px';
                     }
                 } catch(e) {}
             }
@@ -134,7 +139,11 @@ def inject_strong_input_overrides():
             function applyAll() {
                 document.querySelectorAll('input, textarea, select').forEach(applyInline);
                 // also target common Streamlit wrapper nodes
-                document.querySelectorAll('[data-testid="stSelectbox"] div, [data-testid="stTextInput"] input').forEach(el => el && (el.style.backgroundColor = '#0A0D14'));
+                document.querySelectorAll('[data-testid="stSelectbox"] div, [data-testid="stTextInput"] input').forEach(el => {
+                    if (!el) return;
+                    el.style.backgroundColor = '#08101d';
+                    el.style.borderRadius = '16px';
+                });
             }
 
             // Run periodically (covers autofill and late-rendered widgets)
@@ -152,7 +161,18 @@ def inject_strong_input_overrides():
                     }
                 }
             });
-            mo.observe(document.body, { childList: true, subtree: true });
+
+            const targetNode = document.body || document.documentElement;
+            if (targetNode) {
+                mo.observe(targetNode, { childList: true, subtree: true });
+            } else {
+                window.addEventListener('load', () => {
+                    const loadedTarget = document.body || document.documentElement;
+                    if (loadedTarget) {
+                        mo.observe(loadedTarget, { childList: true, subtree: true });
+                    }
+                });
+            }
         })();
         </script>
         """,
